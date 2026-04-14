@@ -117,6 +117,7 @@ Token *tokenize(char *p){
     return head.next;
 }
 
+// 抽象構文木のノードの種類
 typedef enum {
     ND_ADD,
     ND_SUB,
@@ -127,6 +128,7 @@ typedef enum {
 
 typedef struct Node Node;
 
+// 抽象構文木のノードの型
 struct Node {
     NodeKind kind;
     Node *lhs;
@@ -189,6 +191,38 @@ Node *primary(){
     }
 
     return new_node_num(expect_number());
+}
+
+// 抽象構文木をアセンブリコードに変換する
+void gen(Node *node){
+    if(node->kind == ND_NUM){
+        printf("  push %d\n", node->val);
+        return;
+    }
+
+    gen(node->lhs);
+    gen(node->rhs);
+
+    printf("  pop rdi\n");
+    printf("  pop rax\n");
+
+    switch(node->kind){
+        case ND_ADD:
+            printf("  add rax, rdi\n");
+            break;
+        case ND_SUB:
+            printf("  sub rax, rdi\n");
+            break;
+        case ND_MUL:
+            printf("  imul rax, rdi\n");
+            break;
+        case ND_DIV:
+            printf("  cqo\n");
+            printf("  idiv rdi\n");
+            break;
+    }
+
+    printf("  push rax\n");
 }
 
 int main(int argc, char **argv){
