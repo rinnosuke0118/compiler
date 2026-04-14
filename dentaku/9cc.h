@@ -23,12 +23,6 @@ struct Token {
     int len; // トークンの長さ
 };
 
-//現在着目しているトークン
-extern Token *token;
-
-//入力プログラム
-extern char *user_input;
-
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
 void expect(char *op);
