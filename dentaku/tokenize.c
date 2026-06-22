@@ -1,5 +1,13 @@
 #include "9cc.h"
 
+void error(char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
 //エラー個所を報告する
 void error_at(char *loc, char *fmt, ...){
     va_list ap;
@@ -23,6 +31,15 @@ bool consume(char *op) {
 
     token = token->next;
     return true;
+}
+
+Token *consume_ident(){
+    if(token->kind != TK_IDENT){
+        return NULL;
+    }
+    Token *tok = token;
+    token = token->next;
+    return tok;
 }
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
@@ -82,7 +99,7 @@ Token *tokenize(char *p){
             continue;
         }
         
-        if(strchr("+-*/()<>", *p)){
+        if(strchr("+-*/()<>;=", *p)){
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
@@ -92,6 +109,12 @@ Token *tokenize(char *p){
             char *q = p;
             cur->val = strtol(p, &p, 10);
             cur->len = p - q;
+            continue;
+        }
+
+        if('a' <= *p && *p <= 'z'){
+            cur = new_token(TK_IDENT, cur, p, 1);
+            p++;
             continue;
         }
 
