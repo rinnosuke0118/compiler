@@ -92,4 +92,14 @@ assert 9  'foo=3; foo=foo*3; foo;'
 assert 1  'foo=3; bar=4; foo<bar;'
 assert 0  'foo=5; bar=3; foo<bar;'
 
+# return文
+assert 5  'return 5;'
+assert 14 'return 2+3*4;'
+assert 3  'a=3; return a;'
+assert 7  'a=3; b=4; return a+b;'
+
+# return後の文は実行されない
+assert 5  'return 5; return 10;'
+assert 3  'a=3; return a; a=100; a;'
+
 echo OK

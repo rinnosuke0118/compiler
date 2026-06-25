@@ -9,6 +9,7 @@
 typedef enum {
     TK_RESERVED, //記号
     TK_IDENT,    // 識別子
+    TK_RETURN,   // return
     TK_NUM,      // 整数トークン
     TK_EOF,  //入力の終わりを表すトークン
 } TokenKind;
@@ -31,11 +32,13 @@ void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
 Token *consume_ident();
+bool consume_return();
 void expect(char *op);
 int expect_number();
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 int startswith(char *p, char *q);
+int is_alnum(char c);
 Token *tokenize(char *p);
 
 typedef struct LVar LVar;
@@ -62,7 +65,8 @@ typedef enum {
     ND_EQ,  // ==
     ND_NE,  // !=
     ND_LT,  // <
-    ND_LE   // <=
+    ND_LE,  // <=
+    ND_RETURN  // return
 } NodeKind;
 
 typedef struct Node Node;

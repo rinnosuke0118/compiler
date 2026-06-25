@@ -42,6 +42,13 @@ Token *consume_ident(){
     return tok;
 }
 
+bool consume_return() {
+    if (token->kind != TK_RETURN)
+        return false;
+    token = token->next;
+    return true;
+}
+
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
 void expect(char *op){
@@ -80,6 +87,13 @@ int startswith(char *p, char *q){
     return memcmp(p, q, strlen(q)) == 0;
 }
 
+int is_alnum(char c) {
+  return ('a' <= c && c <= 'z') ||
+         ('A' <= c && c <= 'Z') ||
+         ('0' <= c && c <= '9') ||
+         (c == '_');
+}
+
 // 入力文字列pをトークナイズしてそれを返す
 Token *tokenize(char *p){
     Token head;
@@ -112,13 +126,19 @@ Token *tokenize(char *p){
             continue;
         }
 
+        if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6])) {
+            cur = new_token(TK_RETURN, cur, p, 6);
+            p += 6;
+            continue;
+        }
+
         if('a' <= *p && *p <= 'z'){
             char *start = p;
             while('a' <= *p && *p <= 'z')  // 英字が続く限り読み進める
                 p++;
             cur = new_token(TK_IDENT, cur, start, p - start);  // len=文字数
             continue;
-        }
+        }  
 
         error_at(p, "トークナイズできません");        
     }
