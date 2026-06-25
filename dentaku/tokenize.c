@@ -113,8 +113,10 @@ Token *tokenize(char *p){
         }
 
         if('a' <= *p && *p <= 'z'){
-            cur = new_token(TK_IDENT, cur, p, 1);
-            p++;
+            char *start = p;
+            while('a' <= *p && *p <= 'z')  // 英字が続く限り読み進める
+                p++;
+            cur = new_token(TK_IDENT, cur, start, p - start);  // len=文字数
             continue;
         }
 

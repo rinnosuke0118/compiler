@@ -75,4 +75,21 @@ assert 1 'a=5; b=5; a>=b;'
 assert 12 'a=2; b=3; a+b*a+a*b-a;'
 assert 1  'a=10; b=5; a/b==2;'
 
+# 複数文字の変数名
+assert 3  'foo=3; foo;'
+assert 7  'foo=3; bar=4; foo+bar;'
+assert 10 'abc=10; abc;'
+assert 5  'hoge=5; hoge;'
+
+# 1文字変数と複数文字変数の共存
+assert 8  'a=3; foo=5; a+foo;'
+assert 8  'x=2; myvar=4; x*myvar;'
+
+# 複数文字変数への再代入
+assert 9  'foo=3; foo=foo*3; foo;'
+
+# 複数文字変数を使った比較
+assert 1  'foo=3; bar=4; foo<bar;'
+assert 0  'foo=5; bar=3; foo<bar;'
+
 echo OK
