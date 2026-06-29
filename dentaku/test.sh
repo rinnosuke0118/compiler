@@ -119,4 +119,13 @@ assert 5 'for(i=0; i<5; i=i+1) i=i; return i;'
 assert 10 'sum=0; for(i=0; i<5; i=i+1) sum=sum+i; return sum;'
 assert 5 'i=3; for(; i<5; i=i+1) i=i; return i;'
 
+# {}ブロック
+assert 3  '{ a=3; } return a;'
+assert 3  '{ a=1; b=2; } return a+b;'
+assert 2  'if (1) { a=1; a=a+1; } return a;'
+assert 5  'if (0) { a=1; } else { a=5; } return a;'
+assert 3  'i=0; while(i<3) { i=i+1; } return i;'
+assert 10 'sum=0; for(i=1; i<=4; i=i+1) { sum=sum+i; } return sum;'
+assert 3  '{ a=1; { b=2; } } return a+b;'
+
 echo OK

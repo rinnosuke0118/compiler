@@ -41,6 +41,21 @@ Node *expr() {
 Node *stmt() {
   Node *node;
 
+  if (consume("{")) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    int cap = 8;
+    node->body = malloc(sizeof(Node *) * cap);
+    while (!consume("}")) {
+      if (node->body_len == cap) {
+        cap *= 2;
+        node->body = realloc(node->body, sizeof(Node *) * cap);
+      }
+      node->body[node->body_len++] = stmt();
+    }
+    return node;
+  }
+
   if (consume_if()) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_IF;

@@ -94,6 +94,14 @@ void gen(Node *node){
             printf("  push 0\n");
             return;
         }
+        case ND_BLOCK: {
+            for (int i = 0; i < node->body_len; i++) {
+                gen(node->body[i]);
+                printf("  pop rax\n");
+            }
+            printf("  push 0\n");
+            return;
+        }
     }
     
     gen(node->lhs);

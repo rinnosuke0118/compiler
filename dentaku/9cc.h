@@ -78,6 +78,7 @@ typedef enum {
     ND_IF,  // if
     ND_FOR,  // for
     ND_WHILE,  // while
+    ND_BLOCK  // {}
 } NodeKind;
 
 typedef struct Node Node;
@@ -95,6 +96,9 @@ struct Node {
     Node *inc;
     int val;
     int offset;    // kindがND_LVARの場合のみ使う
+    // ND_BLOCK用: ブロック内の文の動的配列
+    Node **body;
+    int body_len;
 };
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
