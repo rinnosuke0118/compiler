@@ -102,4 +102,21 @@ assert 7  'a=3; b=4; return a+b;'
 assert 5  'return 5; return 10;'
 assert 3  'a=3; return a; a=100; a;'
 
+# if文
+assert 1 'if (1) return 1; return 0;'
+assert 0 'if (0) return 1; return 0;'
+assert 2 'if (1) return 2; else return 3;'
+assert 3 'if (0) return 2; else return 3;'
+assert 5 'a=5; if (a) return a; return 0;'
+assert 2 'a=2; if (a==1) return 1; else if (a==2) return 2; else return 3;'
+
+# while文
+assert 5 'i=0; while(i<5) i=i+1; return i;'
+assert 0 'i=0; while(i<0) i=i+1; return i;'
+
+# for文
+assert 5 'for(i=0; i<5; i=i+1) i=i; return i;'
+assert 10 'sum=0; for(i=0; i<5; i=i+1) sum=sum+i; return sum;'
+assert 5 'i=3; for(; i<5; i=i+1) i=i; return i;'
+
 echo OK

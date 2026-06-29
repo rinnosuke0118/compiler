@@ -1,5 +1,7 @@
 #include "9cc.h"
 
+static int label_count = 0;
+
 void gen_lval(Node *node) {
   if (node->kind != ND_LVAR)
     error("代入の左辺値が変数ではありません");
@@ -37,6 +39,61 @@ void gen(Node *node){
             printf("  pop rbp\n");
             printf("  ret\n");
             return;
+        case ND_IF: {
+            int c = label_count++;
+            gen(node->cond);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            printf("  je  .Lelse%d\n", c);
+            gen(node->lhs);
+            printf("  jmp  .Lend%d\n", c);
+            printf(".Lelse%d:\n", c);
+            if (node->rhs) {
+                gen(node->rhs);
+            } else {
+                printf("  push 0\n");
+            }
+            printf(".Lend%d:\n", c);
+            return;
+        }
+        case ND_WHILE: {
+            int c = label_count++;
+            printf(".Lbegin%d:\n", c);
+            gen(node->cond);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            printf("  je  .Lend%d\n", c);
+            gen(node->lhs);
+            printf("  pop rax\n");
+            printf("  jmp .Lbegin%d\n", c);
+            printf(".Lend%d:\n", c);
+            printf("  push 0\n");
+            return;
+        }
+        case ND_FOR: {
+            int c = label_count++;
+            if(node->init){
+                gen(node->init);
+                printf("  pop rax\n");
+            }
+            printf(".Lbegin%d:\n", c);
+            if(node->cond){
+                gen(node->cond);
+                printf("  pop rax\n");
+                printf("  cmp rax, 0\n");
+                printf("  je  .Lend%d\n", c);
+            }
+            gen(node->lhs);
+            printf("  pop rax\n");
+            if(node->inc){
+                gen(node->inc);
+                printf("  pop rax\n");
+            }
+            printf("  jmp .Lbegin%d\n", c);
+            printf(".Lend%d:\n", c);
+            printf("  push 0\n");
+            return;
+        }
     }
     
     gen(node->lhs);

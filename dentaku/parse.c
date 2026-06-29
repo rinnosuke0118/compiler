@@ -41,6 +41,48 @@ Node *expr() {
 Node *stmt() {
   Node *node;
 
+  if (consume_if()) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_IF;
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->lhs = stmt();
+    if (consume_else())
+      node->rhs = stmt();
+    return node;
+  }
+
+  if (consume_while()) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_WHILE;
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->lhs = stmt();
+    return node;
+  }
+
+  if (consume_for()) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_FOR;
+    expect("(");
+    if (!consume(";")) {
+      node->init = expr();
+      expect(";");
+    }
+    if (!consume(";")) {
+      node->cond = expr();
+      expect(";");
+    }
+    if (!consume(")")) {
+      node->inc = expr();
+      expect(")");
+    }
+    node->lhs = stmt();
+    return node;
+  }
+
   if (consume_return()) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
