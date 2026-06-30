@@ -119,10 +119,58 @@ Node *stmt() {
   return node;
 }
 
+Node *funcdef() {
+    // localsをリセット（関数ごとにローカル変数を独立させる）
+    locals = NULL;
+
+    Token *tok = consume_ident();
+    expect("(");
+
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_FUNCDEF;
+    node->funcname = tok->str;
+    node->funcname_len = tok->len;
+    if (!find_lfunc(tok)) {
+        LFunc *lfunc = calloc(1, sizeof(LFunc));
+        lfunc->next = funcs;
+        lfunc->name = tok->str;
+        lfunc->len = tok->len;
+        funcs = lfunc;
+    } else {
+        error("関数の2重定義です");
+    }
+
+    if(!consume(")")) {
+        int cap = 6;
+        node->params = malloc(sizeof(LVar *) * cap);
+        do {
+            if (node->params_len >= 6){
+                error("引数は6個以下にしてください");
+            }
+            
+            Token *ptok = consume_ident();
+            LVar *lvar = calloc(1, sizeof(LVar));
+            lvar->next = locals;
+            lvar->name = ptok->str;
+            lvar->len = ptok->len;
+            lvar->offset = locals ? locals->offset + 8 : 8;
+            locals = lvar;
+            node->params[node->params_len++] = lvar;
+        } while (consume(","));
+        expect(")");
+    }
+
+    node->lhs = stmt();
+
+    int sz = locals ? locals->offset : 0;
+    node->locals_size = (sz + 15) & ~15;
+    return node;
+}
+
 void program() {
   int i = 0;
   while (!at_eof()){
-    code[i++] = stmt();
+    code[i++] = funcdef();
   } 
   code[i] = NULL;
 }

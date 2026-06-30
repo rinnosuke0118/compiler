@@ -1,6 +1,6 @@
 # 9cc — 自作Cコンパイラ
 
-整数演算・変数・制御構文を x86-64 アセンブリへコンパイルする学習用コンパイラです。
+整数演算・変数・制御構文・関数定義を x86-64 アセンブリへコンパイルする学習用コンパイラです。
 
 [低レイヤを知りたい人のためのCコンパイラ作成入門](https://www.sigbus.info/compilerbook) を参考に実装しています。
 
@@ -25,11 +25,19 @@ cc -o tmp tmp.s
 ./tmp; echo $?
 ```
 
+全てのコードは何らかの関数定義の中に書く必要があります。エントリポイントは `main()` です。
+
+```bash
+./9cc 'main() { return 42; }' > tmp.s
+cc -o tmp tmp.s
+./tmp; echo $?   # 42
+```
+
 外部関数を呼び出す場合は、別途コンパイルしたオブジェクトファイルをリンクします。
 
 ```bash
 cc -c -o myfuncs.o myfuncs.c
-./9cc 'return add(1, 2);' > tmp.s
+./9cc 'main() { return add(1, 2); }' > tmp.s
 cc -o tmp tmp.s myfuncs.o
 ./tmp; echo $?
 ```
@@ -50,6 +58,7 @@ cc -o tmp tmp.s myfuncs.o
 - 小文字アルファベットのみで構成されたローカル変数（`a`〜`z`、`foo`、`myvar` など）
 - 変数宣言不要。初回代入で自動的に確保される
 - 変数名に数字・アンダースコアは使用不可
+- 変数のスコープは関数ごとに独立する
 
 ### 文
 
@@ -66,16 +75,33 @@ cc -o tmp tmp.s myfuncs.o
 - `for` の init / cond / inc はすべて省略可能
 - `else if` による多分岐も可能
 
+### 関数定義
+
+型名を省略した独自構文で関数を定義できます（int型のみのため）。
+
+```
+add(x, y) { return x + y; }
+```
+
+- 引数0〜6個に対応
+- 再帰呼び出し可能
+- 引数は関数プロローグでレジスタからスタックに書き出され、ローカル変数として扱われる
+
+```bash
+./9cc 'fib(n) { if (n<=1) return n; return fib(n-1)+fib(n-2); } main() { return fib(10); }' > tmp.s
+cc -o tmp tmp.s
+./tmp; echo $?   # 55
+```
+
 ### 関数呼び出し
 
 - 引数0〜6個の関数呼び出しに対応（`foo()`, `add(a, b)` など）
 - x86-64 System V ABI に従い、引数をレジスタ（rdi, rsi, rdx, rcx, r8, r9）で渡す
 - 戻り値は rax から受け取る
-- 関数定義は不可（外部で定義した関数を呼び出すのみ）
+- 自前定義した関数・外部関数のどちらも呼び出し可能
 
 ### 制約
 
-- 関数定義不可
 - 型なし（整数のみ）
 - 配列・ポインタ不可
 
@@ -100,7 +126,7 @@ dentaku/
   ▼ tokenize()
 トークン列
   │
-  ▼ program() / stmt() / expr() / ...
+  ▼ program() / funcdef() / stmt() / expr() / ...
 抽象構文木（AST）
   │
   ▼ gen()
@@ -110,7 +136,8 @@ x86-64 アセンブリ（Intel記法）
 パーサは以下の生成規則を再帰下降で実装しています。
 
 ```
-program    = stmt*
+program    = funcdef*
+funcdef    = ident "(" (ident ("," ident)*)? ")" "{" stmt* "}"
 stmt       = expr ";"
            | "{" stmt* "}"
            | "if" "(" expr ")" stmt ("else" stmt)?

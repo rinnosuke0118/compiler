@@ -120,7 +120,7 @@ void gen(Node *node){
             printf("  mov rax, rsp\n");
             printf("  and rax, 15\n");
             printf("  jnz .Lmisaligned%d\n", c);
-            
+
             printf("  call %.*s\n", node->funcname_len, node->funcname);
             printf("  jmp .Lcallend%d\n", c);
 
@@ -131,6 +131,27 @@ void gen(Node *node){
 
             printf(".Lcallend%d:\n", c);
             printf("  push rax\n");
+            return;
+        }
+        case ND_FUNCDEF: {
+            static const char *regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+            // ラベルとプロローグ
+            printf(".global %.*s\n", node->funcname_len, node->funcname);
+            printf("%.*s:\n", node->funcname_len, node->funcname);
+            printf("  push rbp\n");
+            printf("  mov rbp, rsp\n");
+            printf("  sub rsp, %d\n", node->locals_size);
+            // 引数レジスタをスタック上のローカル変数領域に書き出す
+            for (int i = 0; i < node->params_len; i++) {
+                printf("  mov [rbp-%d], %s\n", node->params[i]->offset, regs[i]);
+            }
+            // 関数本体
+            gen(node->lhs);
+            printf("  pop rax\n");
+            // エピローグ（return文がない場合のフォールスルー用）
+            printf("  mov rsp, rbp\n");
+            printf("  pop rbp\n");
+            printf("  ret\n");
             return;
         }
     }

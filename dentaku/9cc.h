@@ -90,7 +90,8 @@ typedef enum {
     ND_FOR,  // for
     ND_WHILE,  // while
     ND_BLOCK,  // {}
-    ND_CALL    // 関数呼び出し
+    ND_CALL,  // 関数呼び出し
+    ND_FUNCDEF  // 関数定義
 } NodeKind;
 
 typedef struct Node Node;
@@ -100,27 +101,38 @@ struct Node {
     NodeKind kind;
     Node *lhs;
     Node *rhs;
+
     // "if" ( cond ) then "else" els
     // "for" ( init; cond; inc ) body
     // "while" ( cond ) body
     Node *cond;
     Node *init;
     Node *inc;
+
     int val;
     int offset;    // kindがND_LVARの場合のみ使う
+
     // ND_BLOCK用: ブロック内の文の動的配列
     Node **body;
     int body_len;
+
     // ND_CALL用: 呼び出す関数名、引数の配列
     char *funcname;
     int funcname_len;
     Node **args;
     int args_len;
+
+    // 関数定義用
+    LVar **params; // パラメータ名の配列
+    int params_len; // パラメータ数
+    int locals_size; // この関数のlocalsが占めるサイズ（プロローグのsub rsp用）
 };
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 Node *expr();
+Node *stmt();
+Node *funcdef();
 Node *equality();
 Node *relational();
 Node *add();
