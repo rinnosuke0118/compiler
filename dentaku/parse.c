@@ -65,6 +65,27 @@ Node *stmt() {
     return node;
   }
 
+  if (consume_int()) {
+    Token *tok = consume_ident();
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+
+    LVar *lvar = find_lvar(tok);
+    if (lvar) {
+        node->offset = lvar->offset;
+    } else {
+        lvar = calloc(1, sizeof(LVar));
+        lvar->next = locals;
+        lvar->name = tok->str;
+        lvar->len = tok->len;
+        lvar->offset = locals ? locals->offset + 8 : 8;
+        node->offset = lvar->offset;
+        locals = lvar;
+    }
+    expect(";");
+    return node;
+  }
+
   if (consume_if()) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_IF;
@@ -123,6 +144,9 @@ Node *funcdef() {
     // localsをリセット（関数ごとにローカル変数を独立させる）
     locals = NULL;
 
+    if(!consume_int()){
+        error("関数名の前にintをつけてください");
+    }
     Token *tok = consume_ident();
     expect("(");
 
@@ -146,6 +170,9 @@ Node *funcdef() {
         do {
             if (node->params_len >= 6){
                 error("引数は6個以下にしてください");
+            }
+            if (!consume_int()){
+                error("引数名の前にintをつけてください");
             }
             
             Token *ptok = consume_ident();
@@ -266,6 +293,7 @@ Node *primary(){
             node->funcname = tok->str;
             node->funcname_len = tok->len;
             if (!find_lfunc(tok)) {
+                // 外部関数（リンク時に解決）はfuncsに登録して呼び出しを許可する
                 LFunc *lfunc = calloc(1, sizeof(LFunc));
                 lfunc->next = funcs;
                 lfunc->name = tok->str;
@@ -285,19 +313,11 @@ Node *primary(){
             }
         } else {
             node->kind = ND_LVAR;
-
             LVar *lvar = find_lvar(tok);
-            if (lvar) {
-                node->offset = lvar->offset;
-            } else {
-                lvar = calloc(1, sizeof(LVar));
-                lvar->next = locals;
-                lvar->name = tok->str;
-                lvar->len = tok->len;
-                lvar->offset = locals ? locals->offset + 8 : 8;
-                node->offset = lvar->offset;
-                locals = lvar;
+            if (!lvar) {
+                error("未定義の変数です");
             }
+            node->offset = lvar->offset;
         }
         return node;
     }

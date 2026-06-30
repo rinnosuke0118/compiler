@@ -49,6 +49,13 @@ bool consume_return() {
     return true;
 }
 
+bool consume_int() {
+    if (token->kind != TK_INT)
+        return false;
+    token = token->next;
+    return true;
+}
+
 bool consume_if() {
     if (token->kind != TK_IF)
         return false;
@@ -157,6 +164,12 @@ Token *tokenize(char *p){
         if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6])) {
             cur = new_token(TK_RETURN, cur, p, 6);
             p += 6;
+            continue;
+        }
+
+        if (strncmp(p, "int", 3) == 0 && !is_alnum(p[3])) {
+            cur = new_token(TK_INT, cur, p, 3);
+            p += 3;
             continue;
         }
 

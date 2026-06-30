@@ -10,6 +10,7 @@ typedef enum {
     TK_RESERVED, //記号
     TK_IDENT,    // 識別子
     TK_RETURN,   // return
+    TK_INT,   //int
     TK_IF,   //if
     TK_ELSE,   //else
     TK_FOR,   //for
@@ -37,6 +38,7 @@ void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
 Token *consume_ident();
 bool consume_return();
+bool consume_int();
 bool consume_if();
 bool consume_else();
 bool consume_for();
