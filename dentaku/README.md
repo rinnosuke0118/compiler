@@ -25,6 +25,15 @@ cc -o tmp tmp.s
 ./tmp; echo $?
 ```
 
+外部関数を呼び出す場合は、別途コンパイルしたオブジェクトファイルをリンクします。
+
+```bash
+cc -c -o myfuncs.o myfuncs.c
+./9cc 'return add(1, 2);' > tmp.s
+cc -o tmp tmp.s myfuncs.o
+./tmp; echo $?
+```
+
 ## 対応機能
 
 ### 演算子
@@ -57,9 +66,16 @@ cc -o tmp tmp.s
 - `for` の init / cond / inc はすべて省略可能
 - `else if` による多分岐も可能
 
+### 関数呼び出し
+
+- 引数0〜6個の関数呼び出しに対応（`foo()`, `add(a, b)` など）
+- x86-64 System V ABI に従い、引数をレジスタ（rdi, rsi, rdx, rcx, r8, r9）で渡す
+- 戻り値は rax から受け取る
+- 関数定義は不可（外部で定義した関数を呼び出すのみ）
+
 ### 制約
 
-- 関数定義・関数呼び出し不可
+- 関数定義不可
 - 型なし（整数のみ）
 - 配列・ポインタ不可
 
@@ -108,7 +124,7 @@ relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 add        = mul ("+" mul | "-" mul)*
 mul        = unary ("*" unary | "/" unary)*
 unary      = ("+" | "-")? primary
-primary    = num | ident | "(" expr ")"
+primary    = num | ident ("(" (expr ("," expr)*)? ")")? | "(" expr ")"
 ```
 
 コード生成はスタックマシン方式で、すべての式はスタックに値を1つ積んで返します。
