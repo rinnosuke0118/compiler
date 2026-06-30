@@ -6,6 +6,10 @@ cat <<EOF > functest.c
 int retthree() { return 3; }
 int retfive() { return 5; }
 void printok() { printf("OK\n"); }
+int add(int x, int y) { return x + y; }
+int mul(int x, int y) { return x * y; }
+void printsum(int x, int y) { printf("%d\n", x + y); }
+int addthree(int a, int b, int c) { return a + b + c; }
 EOF
 cc -c -o functest.o functest.c
 
@@ -167,5 +171,18 @@ assert 1 'if (retthree()==3) return 1; return 0;'
 assert_out "OK" 'printok();'
 assert_out "OK" 'if (1) printok();'
 assert_out "OK" 'i=0; while(i<1) { printok(); i=i+1; }'
+
+# 引数あり関数呼び出し（戻り値の検証）
+assert 5  'return add(2, 3);'
+assert 6  'return mul(2, 3);'
+assert 10 'return add(3, 7);'
+assert 6  'return addthree(1, 2, 3);'
+assert 5  'a=2; b=3; return add(a, b);'
+assert 7  'return add(retthree(), retfive()-1);'
+
+# 引数あり関数呼び出し（実際に呼ばれたかstdoutで確認）
+assert_out "5"  'printsum(2, 3);'
+assert_out "10" 'a=3; b=7; printsum(a, b);'
+assert_out "5"  'printsum(retthree(), retfive()-3);'
 
 echo OK

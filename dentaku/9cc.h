@@ -111,9 +111,11 @@ struct Node {
     // ND_BLOCK用: ブロック内の文の動的配列
     Node **body;
     int body_len;
-    // ND_CALL用: 呼び出す関数名
+    // ND_CALL用: 呼び出す関数名、引数の配列
     char *funcname;
     int funcname_len;
+    Node **args;
+    int args_len;
 };
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);

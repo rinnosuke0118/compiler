@@ -218,7 +218,17 @@ Node *primary(){
                 lfunc->len = tok->len;
                 funcs = lfunc;
             }
-            expect(")");
+
+            if(!consume(")")) {
+                int cap = 6;
+                node->args = malloc(sizeof(Node *) * cap);
+                do {
+                    if (node->args_len >= 6)
+                        error("引数は6個以下にしてください");
+                    node->args[node->args_len++] = expr();
+                } while (consume(","));
+                expect(")");
+            }
         } else {
             node->kind = ND_LVAR;
 

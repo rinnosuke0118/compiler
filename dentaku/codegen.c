@@ -103,6 +103,17 @@ void gen(Node *node){
             return;
         }
         case ND_CALL: {
+            // 全引数をスタックにpush
+            for (int i = 0; i < node->args_len; i++) {
+                gen(node->args[i]);
+            }
+
+            // 逆順にレジスタへpop
+            static const char *regs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+            for (int i = node->args_len - 1; i >= 0; i--){
+                printf("  pop %s\n", regs[i]);
+            }
+
             // x86-64 ABI: call直前にrspが16バイト境界である必要がある
             // スタックマシンで途中に値が積まれていると8バイトずれる場合があるため補正する
             int c = label_count++;
