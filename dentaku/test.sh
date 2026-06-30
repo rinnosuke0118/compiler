@@ -202,4 +202,10 @@ assert 55 'fib(n) { if (n<=1) return n; return fib(n-1)+fib(n-2); } main() { ret
 assert_out "$(printf '0\n1\n1\n2\n3\n5\n8\n13')" \
   'fib(n) { if (n<=1) return n; return fib(n-1)+fib(n-2); } main() { i=0; while(i<=7) { printint(fib(i)); i=i+1; } return 0; }'
 
+# 単項 & と単項 *
+assert 5  'main() { a=5; p=&a; return *p; }'          # & でアドレス取得、* で読み取り
+assert 10 'main() { a=5; p=&a; *p=10; return a; }'    # ポインタ経由で書き込み
+assert 7  'main() { a=7; return *&a; }'                # *& で元の値に戻る
+assert 20 'main() { a=10; p=&a; a=20; return *p; }'   # エイリアス: a の変更が *p に反映
+
 echo OK

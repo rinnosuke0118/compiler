@@ -91,7 +91,9 @@ typedef enum {
     ND_WHILE,  // while
     ND_BLOCK,  // {}
     ND_CALL,  // 関数呼び出し
-    ND_FUNCDEF  // 関数定義
+    ND_FUNCDEF,  // 関数定義
+    ND_ADDR,  // 単項&
+    ND_DEREF  // 単項*
 } NodeKind;
 
 typedef struct Node Node;
