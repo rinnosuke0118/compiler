@@ -61,6 +61,17 @@ struct LVar {
 
 extern LVar *locals;
 
+typedef struct LFunc LFunc;
+
+// 関数名の型
+struct LFunc {
+    LFunc *next; // 次の関数かNULL
+    char *name; // 関数の名前
+    int len;    // 名前の長さ
+};
+
+extern LFunc *funcs;
+
 // 抽象構文木のノードの種類
 typedef enum {
     ND_ADD, // +
@@ -78,7 +89,8 @@ typedef enum {
     ND_IF,  // if
     ND_FOR,  // for
     ND_WHILE,  // while
-    ND_BLOCK  // {}
+    ND_BLOCK,  // {}
+    ND_CALL    // 関数呼び出し
 } NodeKind;
 
 typedef struct Node Node;
@@ -99,6 +111,9 @@ struct Node {
     // ND_BLOCK用: ブロック内の文の動的配列
     Node **body;
     int body_len;
+    // ND_CALL用: 呼び出す関数名
+    char *funcname;
+    int funcname_len;
 };
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);

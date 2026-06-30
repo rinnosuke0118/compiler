@@ -1,10 +1,21 @@
 #!/bin/bash
+
+# 関数呼び出しテスト用ヘルパーをオブジェクトファイルにコンパイル
+cat <<EOF > functest.c
+#include <stdio.h>
+int retthree() { return 3; }
+int retfive() { return 5; }
+void printok() { printf("OK\n"); }
+EOF
+cc -c -o functest.o functest.c
+
+# 終了コードを検証するアサーション
 assert(){
     expected="$1"
     input="$2"
 
     ./9cc "$input" > tmp.s
-    cc -o tmp tmp.s
+    cc -o tmp tmp.s functest.o
     ./tmp
     actual="$?"
 
@@ -12,6 +23,23 @@ assert(){
         echo "$input => $actual"
     else
         echo "$input => $expected expected, but got $actual"
+        exit 1
+    fi
+}
+
+# 標準出力を検証するアサーション（関数が実際に呼ばれたか確認）
+assert_out(){
+    expected="$1"
+    input="$2"
+
+    ./9cc "$input" > tmp.s
+    cc -o tmp tmp.s functest.o
+    actual=$(./tmp)
+
+    if [ "$actual" = "$expected" ]; then
+        echo "$input => '$actual'"
+    else
+        echo "$input => '$expected' expected, but got '$actual'"
         exit 1
     fi
 }
@@ -127,5 +155,17 @@ assert 5  'if (0) { a=1; } else { a=5; } return a;'
 assert 3  'i=0; while(i<3) { i=i+1; } return i;'
 assert 10 'sum=0; for(i=1; i<=4; i=i+1) { sum=sum+i; } return sum;'
 assert 3  '{ a=1; { b=2; } } return a+b;'
+
+# 引数なし関数呼び出し（戻り値の検証）
+assert 3 'return retthree();'
+assert 5 'return retfive();'
+assert 8 'return retthree() + retfive();'
+assert 3 'a=retthree(); return a;'
+assert 1 'if (retthree()==3) return 1; return 0;'
+
+# 引数なし関数呼び出し（実際に呼ばれたかstdoutで確認）
+assert_out "OK" 'printok();'
+assert_out "OK" 'if (1) printok();'
+assert_out "OK" 'i=0; while(i<1) { printok(); i=i+1; }'
 
 echo OK

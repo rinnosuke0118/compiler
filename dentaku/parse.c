@@ -23,7 +23,16 @@ LVar *find_lvar(Token *tok) {
   return NULL;
 }
 
+// 関数を名前で検索する。見つからなかった場合はNULLを返す。
+LFunc *find_lfunc(Token *tok) {
+  for (LFunc *func = funcs; func; func = func->next)
+    if (func->len == tok->len && !memcmp(tok->str, func->name, func->len))
+      return func;
+  return NULL;
+}
+
 LVar *locals;
+LFunc *funcs;
 
 Node *code[100];
 
@@ -198,19 +207,33 @@ Node *primary(){
     Token *tok = consume_ident();
     if (tok) {
         Node *node = calloc(1, sizeof(Node));
-        node->kind = ND_LVAR;
-
-        LVar *lvar = find_lvar(tok);
-        if (lvar) {
-            node->offset = lvar->offset;
+        if (consume("(")) {
+            node->kind = ND_CALL;
+            node->funcname = tok->str;
+            node->funcname_len = tok->len;
+            if (!find_lfunc(tok)) {
+                LFunc *lfunc = calloc(1, sizeof(LFunc));
+                lfunc->next = funcs;
+                lfunc->name = tok->str;
+                lfunc->len = tok->len;
+                funcs = lfunc;
+            }
+            expect(")");
         } else {
-            lvar = calloc(1, sizeof(LVar));
-            lvar->next = locals;
-            lvar->name = tok->str;
-            lvar->len = tok->len;
-            lvar->offset = locals ? locals->offset + 8 : 8;
-            node->offset = lvar->offset;
-            locals = lvar;
+            node->kind = ND_LVAR;
+
+            LVar *lvar = find_lvar(tok);
+            if (lvar) {
+                node->offset = lvar->offset;
+            } else {
+                lvar = calloc(1, sizeof(LVar));
+                lvar->next = locals;
+                lvar->name = tok->str;
+                lvar->len = tok->len;
+                lvar->offset = locals ? locals->offset + 8 : 8;
+                node->offset = lvar->offset;
+                locals = lvar;
+            }
         }
         return node;
     }

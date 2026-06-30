@@ -102,6 +102,26 @@ void gen(Node *node){
             printf("  push 0\n");
             return;
         }
+        case ND_CALL: {
+            // x86-64 ABI: call直前にrspが16バイト境界である必要がある
+            // スタックマシンで途中に値が積まれていると8バイトずれる場合があるため補正する
+            int c = label_count++;
+            printf("  mov rax, rsp\n");
+            printf("  and rax, 15\n");
+            printf("  jnz .Lmisaligned%d\n", c);
+            
+            printf("  call %.*s\n", node->funcname_len, node->funcname);
+            printf("  jmp .Lcallend%d\n", c);
+
+            printf(".Lmisaligned%d:\n", c);
+            printf("  sub rsp, 8\n");
+            printf("  call %.*s\n", node->funcname_len, node->funcname);
+            printf("  add rsp, 8\n");
+
+            printf(".Lcallend%d:\n", c);
+            printf("  push rax\n");
+            return;
+        }
     }
     
     gen(node->lhs);
