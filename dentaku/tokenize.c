@@ -84,6 +84,13 @@ bool consume_while() {
     return true;
 }
 
+bool consume_sizeof() {
+    if (token->kind != TK_SIZEOF)
+        return false;
+    token = token->next;
+    return true;
+}
+
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
 void expect(char *op){
@@ -194,6 +201,12 @@ Token *tokenize(char *p){
         if (strncmp(p, "while", 5) == 0 && !is_alnum(p[5])) {
             cur = new_token(TK_WHILE, cur, p, 5);
             p += 5;
+            continue;
+        }
+
+        if (strncmp(p, "sizeof", 6) == 0 && !is_alnum(p[6])) {
+            cur = new_token(TK_SIZEOF, cur, p, 6);
+            p += 6;
             continue;
         }
 

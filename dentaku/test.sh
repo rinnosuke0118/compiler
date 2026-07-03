@@ -224,4 +224,9 @@ assert 8 'int main() { int *p; int *q; allocfour(&p, 1, 2, 4, 8); q = p + 3; ret
 assert 1 'int main() { int *p; int *q; allocfour(&p, 1, 2, 4, 8); q = p + 3; q = q - 3; return *q; }'
 assert 2 'int main() { int *p; int *q; allocfour(&p, 1, 2, 4, 8); q = p + 3; q = q - 2; return *q; }'
 
+# sizeof演算子
+assert 4 'int main() { int a; return sizeof(a); }'
+assert 8 'int main() { int *p; return sizeof(p); }'
+assert 5 'int main() { int a; return sizeof(a) + 1; }'
+
 echo OK

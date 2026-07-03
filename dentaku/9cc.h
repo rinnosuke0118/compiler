@@ -15,6 +15,7 @@ typedef enum {
     TK_ELSE,   //else
     TK_FOR,   //for
     TK_WHILE,   //while
+    TK_SIZEOF,   //sizeof
     TK_NUM,      // 整数トークン
     TK_EOF,  //入力の終わりを表すトークン
 } TokenKind;
@@ -43,6 +44,7 @@ bool consume_if();
 bool consume_else();
 bool consume_for();
 bool consume_while();
+bool consume_sizeof();
 void expect(char *op);
 int expect_number();
 bool at_eof();

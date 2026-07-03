@@ -323,6 +323,13 @@ Node *unary(){
     if(consume("-")){
         return new_node(ND_SUB, new_node_num(0), primary());
     }
+    if(consume_sizeof()){
+        Node *node = unary();
+        if (node->type.ty == PTR) {
+            return new_node_num(8);
+        }
+        return new_node_num(4);
+    }
     if(consume("*")){
         Node *node = new_node(ND_DEREF, unary(), NULL);
         if (node->lhs->type.ty != PTR) {
