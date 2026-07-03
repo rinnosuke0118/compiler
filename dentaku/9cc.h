@@ -51,6 +51,13 @@ int startswith(char *p, char *q);
 int is_alnum(char c);
 Token *tokenize(char *p);
 
+typedef struct Type Type;
+
+struct Type {
+    enum { INT, PTR } ty;
+    struct Type *ptr_to;
+};
+
 typedef struct LVar LVar;
 
 // ローカル変数の型
@@ -59,6 +66,7 @@ struct LVar {
     char *name; // 変数の名前
     int len;    // 名前の長さ
     int offset; // RBPからのオフセット
+    Type type; // 変数の型
 };
 
 extern LVar *locals;
@@ -114,7 +122,8 @@ struct Node {
     Node *inc;
 
     int val;
-    int offset;    // kindがND_LVARの場合のみ使う
+    int offset;    // kindがND_LVARの場合に使う。rbpから何バイト下のアドレスに領域を確保するか
+    Type type; // kindがND_LVARの時に使う。変数の型情報。
 
     // ND_BLOCK用: ブロック内の文の動的配列
     Node **body;
@@ -134,7 +143,10 @@ struct Node {
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
+Node *new_add(Node *lhs, Node *rhs);
+Node *new_sub(Node *lhs, Node *rhs);
 Node *expr();
+Type *type();
 Node *stmt();
 Node *funcdef();
 Node *equality();

@@ -31,6 +31,42 @@ LFunc *find_lfunc(Token *tok) {
   return NULL;
 }
 
+Node *new_add(Node *lhs, Node *rhs) {
+    if (lhs->type.ty != PTR && rhs->type.ty != PTR)
+        return new_node(ND_ADD, lhs, rhs);
+
+    if (lhs->type.ty == PTR && rhs->type.ty != PTR) {
+        Node *node;
+        if (lhs->type.ptr_to->ty == PTR){
+            node = new_node(ND_ADD, lhs, new_node(ND_MUL, rhs, new_node_num(8)));
+        } else {
+            node = new_node(ND_ADD, lhs, new_node(ND_MUL, rhs, new_node_num(4)));
+        }
+        node->type = lhs->type;
+        return node;
+    }
+
+    error("INT+PTR、PTR+PTRの計算は実行不能です");
+}
+
+Node *new_sub(Node *lhs, Node *rhs) {
+    if (lhs->type.ty != PTR && rhs->type.ty != PTR)
+        return new_node(ND_SUB, lhs, rhs);
+
+    if (lhs->type.ty == PTR && rhs->type.ty != PTR) {
+        Node *node;
+        if (lhs->type.ptr_to->ty == PTR){
+            node = new_node(ND_SUB, lhs, new_node(ND_MUL, rhs, new_node_num(8)));
+        } else {
+            node = new_node(ND_SUB, lhs, new_node(ND_MUL, rhs, new_node_num(4)));
+        }
+        node->type = lhs->type;
+        return node;
+    }
+
+    error("INT-PTR、PTR-PTRの計算は実行不能です");
+}
+
 LVar *locals;
 LFunc *funcs;
 
@@ -45,6 +81,22 @@ Node *assign() {
 
 Node *expr() {
   return assign();
+}
+
+Type *type() {
+    if (!consume_int()){
+        error("型が正しくありません");
+    }
+
+    Type *ty = calloc(1, sizeof(Type));
+    ty->ty = INT;
+    while(consume("*")){
+        Type *ptr = calloc(1, sizeof(Type));
+        ptr->ty = PTR;
+        ptr->ptr_to = ty;
+        ty = ptr;
+    }
+    return ty;
 }
 
 Node *stmt() {
@@ -65,7 +117,8 @@ Node *stmt() {
     return node;
   }
 
-  if (consume_int()) {
+  if (token->kind == TK_INT) {
+    Type *ty = type();
     Token *tok = consume_ident();
     node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
@@ -78,7 +131,9 @@ Node *stmt() {
         lvar->next = locals;
         lvar->name = tok->str;
         lvar->len = tok->len;
+        lvar->type = *ty;
         lvar->offset = locals ? locals->offset + 8 : 8;
+        node->type = *ty;
         node->offset = lvar->offset;
         locals = lvar;
     }
@@ -144,8 +199,8 @@ Node *funcdef() {
     // localsをリセット（関数ごとにローカル変数を独立させる）
     locals = NULL;
 
-    if(!consume_int()){
-        error("関数名の前にintをつけてください");
+    if (!consume_int()) {
+        error("関数の冒頭にintをつけてください");
     }
     Token *tok = consume_ident();
     expect("(");
@@ -171,15 +226,14 @@ Node *funcdef() {
             if (node->params_len >= 6){
                 error("引数は6個以下にしてください");
             }
-            if (!consume_int()){
-                error("引数名の前にintをつけてください");
-            }
+            Type *pty = type();
             
             Token *ptok = consume_ident();
             LVar *lvar = calloc(1, sizeof(LVar));
             lvar->next = locals;
             lvar->name = ptok->str;
             lvar->len = ptok->len;
+            lvar->type = *pty;
             lvar->offset = locals ? locals->offset + 8 : 8;
             locals = lvar;
             node->params[node->params_len++] = lvar;
@@ -239,9 +293,9 @@ Node *add() {
 
     for(;;){
         if(consume("+")){
-            node = new_node(ND_ADD, node, mul());
+            node = new_add(node, mul());
         }else if(consume("-")){
-            node = new_node(ND_SUB, node, mul());
+            node = new_sub(node, mul());
         }else{
             return node;
         }
@@ -270,10 +324,18 @@ Node *unary(){
         return new_node(ND_SUB, new_node_num(0), primary());
     }
     if(consume("*")){
-        return new_node(ND_DEREF, unary(), NULL);
+        Node *node = new_node(ND_DEREF, unary(), NULL);
+        if (node->lhs->type.ty != PTR) {
+            error("ポインタでない値をデリファレンスしています");
+        }
+        node->type = *node->lhs->type.ptr_to;
+        return node;
     }
     if(consume("&")){
-        return new_node(ND_ADDR, unary(), NULL);
+        Node *node = new_node(ND_ADDR, unary(), NULL);
+        node->type.ty = PTR;
+        node->type.ptr_to = &node->lhs->type;
+        return node;
     }
     return primary();
 }
@@ -318,6 +380,7 @@ Node *primary(){
                 error("未定義の変数です");
             }
             node->offset = lvar->offset;
+            node->type = lvar->type;
         }
         return node;
     }

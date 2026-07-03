@@ -3,6 +3,7 @@
 # 関数呼び出しテスト用ヘルパーをオブジェクトファイルにコンパイル
 cat <<EOF > functest.c
 #include <stdio.h>
+#include <stdlib.h>
 int retthree() { return 3; }
 int retfive() { return 5; }
 void printok() { printf("OK\n"); }
@@ -11,6 +12,15 @@ int mul(int x, int y) { return x * y; }
 void printsum(int x, int y) { printf("%d\n", x + y); }
 int addthree(int a, int b, int c) { return a + b + c; }
 void printint(int n) { printf("%d\n", n); }
+int *allocfour(int **p, int a, int b, int c, int d) {
+  int *q = malloc(4 * sizeof(int));
+  q[0] = a;
+  q[1] = b;
+  q[2] = c;
+  q[3] = d;
+  *p = q;
+  return q;
+}
 EOF
 cc -c -o functest.o functest.c
 
@@ -203,9 +213,15 @@ assert_out "$(printf '0\n1\n1\n2\n3\n5\n8\n13')" \
   'int fib(int n) { if (n<=1) return n; return fib(n-1)+fib(n-2); } int main() { int i; i=0; while(i<=7) { printint(fib(i)); i=i+1; } return 0; }'
 
 # 単項 & と単項 *
-assert 5  'int main() { int a; int p; a=5; p=&a; return *p; }'
-assert 10 'int main() { int a; int p; a=5; p=&a; *p=10; return a; }'
+assert 5  'int main() { int a; int *p; a=5; p=&a; return *p; }'
+assert 10 'int main() { int a; int *p; a=5; p=&a; *p=10; return a; }'
 assert 7  'int main() { int a; a=7; return *&a; }'
-assert 20 'int main() { int a; int p; a=10; p=&a; a=20; return *p; }'
+assert 20 'int main() { int a; int *p; a=10; p=&a; a=20; return *p; }'
+
+# ポインタの加減算（外部ヘルパーallocfourで連続領域を確保してテスト）
+assert 4 'int main() { int *p; int *q; allocfour(&p, 1, 2, 4, 8); q = p + 2; return *q; }'
+assert 8 'int main() { int *p; int *q; allocfour(&p, 1, 2, 4, 8); q = p + 3; return *q; }'
+assert 1 'int main() { int *p; int *q; allocfour(&p, 1, 2, 4, 8); q = p + 3; q = q - 3; return *q; }'
+assert 2 'int main() { int *p; int *q; allocfour(&p, 1, 2, 4, 8); q = p + 3; q = q - 2; return *q; }'
 
 echo OK
