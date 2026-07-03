@@ -56,8 +56,9 @@ Token *tokenize(char *p);
 typedef struct Type Type;
 
 struct Type {
-    enum { INT, PTR } ty;
+    enum { INT, PTR, ARRAY } ty;
     struct Type *ptr_to;
+    size_t array_size;
 };
 
 typedef struct LVar LVar;
@@ -147,6 +148,7 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 Node *new_add(Node *lhs, Node *rhs);
 Node *new_sub(Node *lhs, Node *rhs);
+int size_of(Type *ty);
 Node *expr();
 Type *type();
 Node *stmt();

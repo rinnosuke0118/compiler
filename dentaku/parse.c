@@ -31,6 +31,13 @@ LFunc *find_lfunc(Token *tok) {
   return NULL;
 }
 
+int size_of(Type *ty) {
+    if (ty->ty == PTR) {
+        return 8;
+    }
+    return 4; // INT
+}
+
 Node *new_add(Node *lhs, Node *rhs) {
     if (lhs->type.ty != PTR && rhs->type.ty != PTR)
         return new_node(ND_ADD, lhs, rhs);
@@ -125,15 +132,30 @@ Node *stmt() {
 
     LVar *lvar = find_lvar(tok);
     if (lvar) {
-        node->offset = lvar->offset;
+        error("変数の2重定義です");
     } else {
         lvar = calloc(1, sizeof(LVar));
         lvar->next = locals;
         lvar->name = tok->str;
         lvar->len = tok->len;
-        lvar->type = *ty;
-        lvar->offset = locals ? locals->offset + 8 : 8;
-        node->type = *ty;
+        if (consume("[")){
+            int len = expect_number();
+            expect("]");
+
+            Type *arr_ty = calloc(1, sizeof(Type));
+            arr_ty->ty = ARRAY;
+            arr_ty->ptr_to = ty;
+            arr_ty->array_size = len;
+
+            lvar->type = *arr_ty;
+            node->type = *arr_ty;
+            lvar->offset = locals ? locals->offset + size_of(ty) * len : size_of(ty) * len;
+        } else {
+            lvar->type = *ty;
+            node->type = *ty;
+            lvar->offset = locals ? locals->offset + 8 : 8;
+        }
+        
         node->offset = lvar->offset;
         locals = lvar;
     }
